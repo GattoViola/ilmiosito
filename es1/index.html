@@ -26,7 +26,7 @@
 
 		function draw(){
 			// sfondo nero
-			background(255)
+			background(0)
 			noStroke()
 
 			let numH = faccione.width
@@ -49,7 +49,7 @@
 					let al = alpha(col)
 					if (al < 50) continue
 					let br = brightness(col)
-					fill(50)
+					fill(255)
 					let px = ox + i * d + map(noise( i * 0.02 + nx, j * 0.02 + ny, nz), 0, 1, -amount, amount)
 					let py = oy + j * d + map(noise( i * 0.02 + nx, j * 0.02 + ny, nz + 5), 0, 1, -amount, amount)
 					circle(px, py, br * 0.1)

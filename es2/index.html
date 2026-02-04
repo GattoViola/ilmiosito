@@ -1,12 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script> scr="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"</script>
+    <title>Griglia Animata Interattiva</title>
+    <style>
+        body {
+            background-color: rgb(255, 255, 255);
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
 </head>
 <body>
-    <script>src="sketch.js"</script>
+<script>
+const cols = 10; // colonne
+const rows = 10; // righe
+const padding = 20; // spazio intorno al bordo nero
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    rectMode(CENTER);
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
+
+function draw() {
+    background(200);
+
+    // Quadrato contenitore
+    const boxSize = min(width, height) - 2 * padding;
+    const startX = (width - boxSize) / 2;
+    const startY = (height - boxSize) / 2;
+
+    // Disegno del bordo nero
+    noFill();
+    stroke(0);
+    strokeWeight(0);
+    rect(width/2, height/2, boxSize, boxSize);
+
+    // Dimensione dei quadrati
+    const baseSize = boxSize / cols * 0.9;
+    const gap = (boxSize - cols * baseSize) / (cols - 1);
+
+    noStroke();
+    fill(0, 0, 0);
+
+    // Animazione dei quadrati
+    for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+            // Posizione del quadrato
+            let x = startX + baseSize/2 + i * (baseSize + gap);
+            let y = startY + baseSize/2 + j * (baseSize + gap);
+
+            // Distanza dal mouse
+            let d = dist(mouseX, mouseY, x, y);
+
+            // Scala base dell'animazione + ingrandimento al passaggio del mouse
+            let scaleFactor = (sin(frameCount * 0.01 + i*0.2 + j*0.2) * 0.3 + 1) * map(d, 0, 200, 1.5, 1, true);
+
+            // Rotazione
+            let angle = sin(frameCount * 0.02 + i*0.1 + j*0.1) * PI/6;
+
+            push();
+            translate(x, y);
+            rotate(angle);
+            scale(scaleFactor);
+            rect(0, 0, baseSize, baseSize);
+            pop();
+        }
+    }
+}
+</script>
 </body>
 </html>

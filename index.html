@@ -9,6 +9,7 @@
     
 body{
     margin-top: 0%;
+    cursor:none;
 }
 
 h1 {
@@ -70,7 +71,8 @@ h3{
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 100;
     font-size:medium;
-    margin-right: 60%;
+    margin-top: 0;
+    margin-left: 50%;
 }
 
 .gay{
@@ -99,7 +101,10 @@ canvas {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 1.5px rgb(255, 0, 0) solid;
+    backdrop-filter: invert(100%);
+    background-color: rgba(255,255,255,0);
+    border: 2px solid white; /* opzionale per evidenziare l’ellisse */
+    border: 1.5px rgba(255, 0, 0, 0) solid;
     pointer-events: none;
     z-index: 9999;
     transform: translate(-50%, -50%);
@@ -135,13 +140,21 @@ canvas {
     </h2>
 
 </section>
+<br>
+<section class="gay2">
+    <div class="letters">DESCRIPTION </div>
+    <div class="letters">& INTERACTION</div>
+</section> 
 
     <h3>
-        Attraverso variazioni di posizione, colore e ritmo, il codice diventa uno strumento espressivo capace di guidare la navigazione e rafforzare l’identità del sito.
-        Questo progetto rappresenta per me un primo approccio consapevole allo sviluppo web: un equilibrio tra controllo tecnico e sensibilità grafica, in cui anche animazioni essenziali contribuiscono a costruire un’esperienza visiva coerente e coinvolgente.
+        Questo sito web è stato realizzato interamente in HTML, CSS e JavaScript come esercizio di sperimentazione tra struttura, interazione e movimento.
+        L’obiettivo non era creare animazioni complesse, ma costruire un linguaggio visivo dinamico partendo da soluzioni basilari, lavorando direttamente sul codice.
+        Le animazioni presenti nascono dall’uso di transizioni CSS, pseudo-classi come :hover e semplici funzioni JavaScript che reagiscono all’interazione dell’utente, come il movimento del cursore o il passaggio del mouse sugli elementi. 
     </h3>
 
 </main>
+
+
 
 <div id="canvas-container"></div>
 
@@ -170,31 +183,50 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight / 2.5);
 }
 
-/* ===== CURSORE FLUIDO ===== */
 document.addEventListener("DOMContentLoaded", () => {
     const cursor = document.getElementById("cursor-ellipse");
 
     let mouseX = 0, mouseY = 0;
     let cursorX = 0, cursorY = 0;
+    let scaleFactor = 1; // scala corrente
+    let targetScale = 1; // scala obiettivo
     const speed = 0.15;
+    const scaleSpeed = 0.1;
 
     document.addEventListener("mousemove", (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
     });
 
+    // Cambia scala al passaggio del mouse sugli elementi .letters e <a>
+    const interactiveElements = document.querySelectorAll('.letters, a');
+
+    interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => targetScale = 1.5); // ingrandisce
+        el.addEventListener('mouseleave', () => targetScale = 1); // torna normale
+    });
+
     function animate() {
+        // Movimento fluido
         cursorX += (mouseX - cursorX) * speed;
         cursorY += (mouseY - cursorY) * speed;
 
+        // Scala fluida
+        scaleFactor += (targetScale - scaleFactor) * scaleSpeed;
+
+        // Applico trasformazioni
         cursor.style.transform =
-          `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
+          `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%) scale(${scaleFactor})`;
 
         requestAnimationFrame(animate);
     }
 
     animate();
 });
+
+
+
+
 </script>
 
 </body>

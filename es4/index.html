@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Cubes Grigi</title>
+<style>
+  body {
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgb(255, 0, 0);
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+<script>
+let rotationAngle = 0; // rotazione automatica
+
+function setup() {
+  createCanvas(windowWidth, windowHeight, WEBGL);
+}
+
+function draw() {
+  background(250);
+
+  // Controllo con il mouse
+  orbitControl();
+
+  // Luci
+  ambientLight(120);
+  directionalLight(255, 255, 255, 0.5, 1, -1);
+
+  push();
+  // rotazione automatica globale
+  rotationAngle -= 0.01; // antioraria
+  rotateY(rotationAngle);
+
+  // Configurazione griglia di cubi
+  let spacing = 80; // distanza tra i cubi
+  let cubeSize = 40; // dimensione base
+  let grid = 3; // cubi per lato
+
+  for (let x = -1; x <= 1; x++) {
+    for (let y = -1; y <= 1; y++) {
+      for (let z = -1; z <= 1; z++) {
+        push();
+        // Posizione cubo
+        translate(x * spacing, y * spacing, z * spacing);
+
+        // Oscillazioni fluide per animazione
+        let scaleX = cubeSize * (1 + 0.5 * sin(frameCount * 0.02 + x));
+        let scaleY = cubeSize * (1 + 0.5 * sin(frameCount * 0.018 + y));
+        let scaleZ = cubeSize * (1 + 0.5 * sin(frameCount * 0.022 + z));
+
+        // Tutti i cubi grigi
+        ambientMaterial(20); // grigio chiaro
+        noStroke();
+        box(scaleX, scaleY, scaleZ);
+        pop();
+      }
+    }
+  }
+
+  pop();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>

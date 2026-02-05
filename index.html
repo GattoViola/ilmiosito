@@ -45,6 +45,7 @@ a:hover{
     padding-left: 0%;
     background-color: rgb(255, 255, 255);
     color: rgb(0, 0, 0);
+    z-index: 999 !important;
 }
 
 .letters:hover{
@@ -87,10 +88,13 @@ h3{
 
 #canvas-container {
     width: 100%;
+    height: 20em;
 }
 
 canvas {
     display: block;
+    position: static;   /* fisso sotto */
+    z-index: 1; 
 }
 
 /* CURSORE */
@@ -109,17 +113,33 @@ canvas {
     z-index: 9999;
     transform: translate(-50%, -50%);
 }
+
+.spazioBianco{
+    margin-top: 0;
+    
+}
 </style>
+
 </head>
+
+
+
+
+
+
+
+
+
 
 <body>
 
+    <div id="canvas-container"></div>
+
 <div id="cursor-ellipse"></div>
 
-<h1>Mad___Design</h1><br>
 
 <p>
-    <a target="_blank" href="https://www.instagram.com/mad__________design">@</a>
+    <a target="_blank" href="https://www.instagram.com/mad__________design" class="spazioBianco">@INSTA</a>
     
     <img src="/lol.jpg" width="100%">
 </p>
@@ -141,6 +161,11 @@ canvas {
 
 </section>
 <br>
+<br>
+<br>
+
+   <img src="/lol.jpg" width="100%">
+
 <section class="gay2">
     <div class="letters">DESCRIPTION </div>
     <div class="letters">& INTERACTION</div>
@@ -152,36 +177,224 @@ canvas {
         Le animazioni presenti nascono dall’uso di transizioni CSS, pseudo-classi come :hover e semplici funzioni JavaScript che reagiscono all’interazione dell’utente, come il movimento del cursore o il passaggio del mouse sugli elementi. 
     </h3>
 
+   
+
 </main>
 
 
 
-<div id="canvas-container"></div>
+
+
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<!-- Matter.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+<!-- poly-decomp.js (necessario per poligoni complessi in Matter.js) -->
+<script src="https://schteppe.github.io/poly-decomp.js/decomp.min.js"></script>
+
 
 <script>
-/* ===== p5 ===== */
-let img;
+let Engine, Composite, World, Body, Bodies, Mouse, MouseConstraint, Common;
+let font;
+let engine, world;
+let bodies = [];
+let dynamicTextSize;
+let mConstraint;
+let hasStarted = false;
 
-function preload(){
-    img = loadImage('/es1/error.jpg');
+function preload() {
+    // Matter.js Aliases
+    Engine = Matter.Engine;
+    Composite = Matter.Composite;
+    World = Matter.World;
+    Bodies = Matter.Bodies;
+    Body = Matter.Body;
+    Mouse = Matter.Mouse;
+    MouseConstraint = Matter.MouseConstraint;
+    Common = Matter.Common;
+
+    // Load Font
+    font = loadFont('HelveticaNeueCyr-Bold.otf');
 }
 
-function setup(){
-    let c = createCanvas(windowWidth, windowHeight / 2.5);
-    c.parent('canvas-container');
-    background(255);
+function setup() {
+    let container = document.getElementById('canvas-container');
+    // Initialize canvas with container dimensions
+    let canvas = createCanvas(container.offsetWidth, container.offsetHeight, WEBGL);
+    canvas.parent('canvas-container');
+    
+    if (window.decomp) {
+        Common.setDecomp(window.decomp);
+    }
+    textFont(font);
+    initSketch();
 }
 
-function draw(){
-    noStroke();
-    image(img, mouseX, mouseY, 230, 150);
+function initSketch() {
+    // 1. Cleanup for resets/resizing
+    if (engine) {
+        World.clear(engine.world);
+        Engine.clear(engine);
+        bodies = [];
+    }
+
+    hasStarted = false;
+
+    // 2. Initialize Physics Engine
+    engine = Engine.create({
+        positionIterations: 10,
+        velocityIterations: 10
+    });
+    world = engine.world;
+    world.gravity.y = 0; // No gravity until click
+
+    // 3. Edge-to-Edge Scaling Logic
+    let phrase = "Mad___Design";
+    let horizontalPadding = 40; // 20px margin on left and right
+    let targetWidth = width - horizontalPadding;
+    
+    let refSize = 100;
+    textSize(refSize);
+    let measuredWidth = textWidth(phrase);
+
+    // Calculate font size to fill the width exactly
+    dynamicTextSize = (targetWidth / measuredWidth) * refSize;
+    textSize(dynamicTextSize);
+
+    // 4. Position at Top with 20px Margin
+    // In WEBGL (0,0) is center. -height/2 is top edge.
+    // 0.35 * dynamicTextSize nudges the physics body center so the visual top hits the margin.
+    let marginTop = 20;
+    let textStartY = -height / 2 + marginTop + (dynamicTextSize * 0.35);
+
+    // 5. Mouse Interaction for WEBGL
+    const mouse = Mouse.create(canvas.elt);
+    mouse.pixelRatio = pixelDensity();
+    mConstraint = MouseConstraint.create(engine, {
+        mouse: mouse,
+        constraint: { stiffness: 0.1, render: { visible: false } }
+    });
+    World.add(world, mConstraint);
+
+    // 6. Create Letters
+    createStaticPhrase(phrase, textStartY);
+
+    // 7. World Boundaries (Invisible)
+    let thickness = 400;
+    let floor = Bodies.rectangle(0, height/2 + thickness/2, width*5, thickness, { isStatic: true });
+    let leftWall = Bodies.rectangle(-width/2 - thickness/2, 0, thickness, height*5, { isStatic: true });
+    let rightWall = Bodies.rectangle(width/2 + thickness/2, 0, thickness, height*5, { isStatic: true });
+
+    World.add(world, [floor, leftWall, rightWall]);
+}
+
+function draw() {
+    background(255); // Set to white or your preferred color
+
+    // Adjust mouse for WEBGL's (0,0) center origin
+    let mX = mouseX - width/2;
+    let mY = mouseY - height/2;
+    mConstraint.mouse.position.x = mX;
+    mConstraint.mouse.position.y = mY;
+
+    Engine.update(engine);
+
+    // Hover effect
+    let isOverAny = false;
+    for (let b of bodies) {
+        if (Matter.Bounds.contains(b.body.bounds, { x: mX, y: mY })) {
+            isOverAny = true;
+            break;
+        }
+    }
+    
+    if (mConstraint.body) cursor('grabbing');
+    else if (isOverAny) cursor('pointer');
+    else cursor(ARROW);
+
+    for (let b of bodies) {
+        b.show();
+    }
+}
+
+function mousePressed() {
+    if (!hasStarted) {
+        makeItFall();
+    }
+}
+
+function createStaticPhrase(phrase, yPos) {
+    textSize(dynamicTextSize);
+    let phraseWidth = textWidth(phrase);
+    let startX = -phraseWidth / 2; // Perfectly centered start point
+
+    let currentX = startX;
+    for (let char of phrase) {
+        let charW = textWidth(char);
+        if (char !== " ") {
+            let xPos = currentX + charW / 2;
+            let newLetter = new Letter(world, xPos, yPos, char, dynamicTextSize);
+            bodies.push(newLetter);
+        }
+        currentX += charW;
+    }
+}
+
+class Letter {
+    constructor(world, x, y, char, size) {
+        this.char = char;
+        this.size = size;
+        textSize(size);
+
+        let boxW = textWidth(char);
+        let boxH = size * 0.7; // Height adjustment for Helvetica
+
+        this.body = Bodies.rectangle(x, y, boxW, boxH, {
+            restitution: 0.4,
+            friction: 0.1,
+            isStatic: true 
+        });
+        World.add(world, this.body);
+    }
+
+    show() {
+        let pos = this.body.position;
+        let angle = this.body.angle;
+        push();
+        translate(pos.x, pos.y);
+        rotateZ(angle);
+        fill(0);
+        noStroke();
+        textAlign(CENTER, CENTER);
+        textSize(this.size);
+        text(this.char, 0, 0);
+        pop();
+    }
+}
+
+function makeItFall() {
+    hasStarted = true;
+    world.gravity.y = 1.5; 
+    
+    for (let b of bodies) {
+        Body.setStatic(b.body, false);
+        Body.applyForce(b.body, b.body.position, {
+            x: random(-0.005, 0.005),
+            y: random(-0.01, -0.04)
+        });
+        Body.setAngularVelocity(b.body, random(-0.05, 0.05));
+    }
 }
 
 function windowResized() {
-    resizeCanvas(windowWidth, windowHeight / 2.5);
+    let container = document.getElementById('canvas-container');
+    resizeCanvas(container.offsetWidth, container.offsetHeight);
+    initSketch(); // Re-calculates font size and positions for the new width
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const cursor = document.getElementById("cursor-ellipse");
@@ -202,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const interactiveElements = document.querySelectorAll('.letters, a');
 
     interactiveElements.forEach(el => {
-        el.addEventListener('mouseenter', () => targetScale = 1.5); // ingrandisce
+        el.addEventListener('mouseenter', () => targetScale = 2); // ingrandisce
         el.addEventListener('mouseleave', () => targetScale = 1); // torna normale
     });
 
@@ -223,7 +436,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     animate();
 });
-
 
 
 

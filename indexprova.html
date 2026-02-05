@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mad___Design | Physics</title>
+    
+    <script src="https://unpkg.com/poly-decomp@0.3.0/dist/decomp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #ffffff; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script>
+let Engine, Composite, World, Body, Bodies, Mouse, MouseConstraint, Common;
+let font;
+let engine, world;
+let bodies = [];
+let dynamicTextSize;
+let mConstraint;
+let hasStarted = false;
+
+function preload() {
+    // Matter.js Aliases
+    Engine = Matter.Engine;
+    Composite = Matter.Composite;
+    World = Matter.World;
+    Bodies = Matter.Bodies;
+    Body = Matter.Body;
+    Mouse = Matter.Mouse;
+    MouseConstraint = Matter.MouseConstraint;
+    Common = Matter.Common;
+
+    // Load Helvetica Neue Cyrillic Bold
+    font = loadFont('HelveticaNeueCyr-Bold.otf');
+}
+
+function setup() {
+    createCanvas(windowWidth, windowHeight, WEBGL);
+    
+    // Attach poly-decomp for concave shapes
+    if (window.decomp) {
+        Common.setDecomp(window.decomp);
+    }
+
+    textFont(font);
+    textAlign(CENTER, TOP);
+
+    initSketch();
+}
+
+function initSketch() {
+    // Cleanup for resets/resizing
+    if (engine) {
+        World.clear(engine.world);
+        Engine.clear(engine);
+        bodies = [];
+    }
+
+    hasStarted = false;
+
+    // Initialize Physics Engine
+    engine = Engine.create({
+        positionIterations: 10,
+        velocityIterations: 10
+    });
+    world = engine.world;
+    world.gravity.y = 0; // No gravity until click
+
+    // Responsive font sizing
+    dynamicTextSize = windowWidth * 0.14; // 14% of width
+    if (dynamicTextSize < 40) dynamicTextSize = 40; // Minimum size
+
+    textSize(dynamicTextSize);
+
+    // Mouse Interaction for WEBGL
+    const mouse = Mouse.create(canvas.elt);
+    mouse.pixelRatio = pixelDensity();
+    mConstraint = MouseConstraint.create(engine, {
+        mouse: mouse,
+        constraint: { stiffness: 0.1, render: { visible: false } }
+    });
+    World.add(world, mConstraint);
+
+    // Create static text
+    let sampleText = "Mad___Design";
+    createStaticPhrase(sampleText);
+
+    // World Boundaries (Invisible)
+    let thickness = 400;
+    let floor = Bodies.rectangle(0, height/2 + thickness/2, width*5, thickness, { isStatic: true });
+    let leftWall = Bodies.rectangle(-width/2 - thickness/2, 0, thickness, height*5, { isStatic: true });
+    let rightWall = Bodies.rectangle(width/2 + thickness/2, 0, thickness, height*5, { isStatic: true });
+
+    World.add(world, [floor, leftWall, rightWall]);
+}
+
+function draw() {
+    background(255); // White background
+
+    // Adjust mouse for WEBGL's (0,0) center origin
+    let mX = mouseX - width/2;
+    let mY = mouseY - height/2;
+    mConstraint.mouse.position.x = mX;
+    mConstraint.mouse.position.y = mY;
+
+    Engine.update(engine);
+
+    // Hover effect
+    let isOverAny = false;
+    for (let b of bodies) {
+        if (Matter.Bounds.contains(b.body.bounds, { x: mX, y: mY })) {
+            isOverAny = true;
+            break;
+        }
+    }
+    
+    if (mConstraint.body) cursor('grabbing');
+    else if (isOverAny) cursor('pointer');
+    else cursor(ARROW);
+
+    // Render Letters
+    for (let b of bodies) {
+        b.show();
+    }
+}
+
+function mousePressed() {
+    if (!hasStarted) {
+        makeItFall();
+    }
+}
+
+function createStaticPhrase(phrase) {
+    textSize(dynamicTextSize);
+    
+    let marginTop = 20; // 20 px sopra le lettere
+    let letterBoxHeight = dynamicTextSize * 0.75; // altezza hitbox lettera
+    let textStartY = -windowHeight/2 + marginTop + letterBoxHeight/2; // allinea il top delle lettere
+    
+    let startX = -textWidth(phrase)/2; // centra orizzontalmente
+
+    let currentX = startX;
+    for (let char of phrase) {
+        let charW = textWidth(char);
+        if (char !== " ") {
+            let xPos = currentX + charW / 2;
+            let newLetter = new Letter(world, xPos, textStartY, char, dynamicTextSize);
+            bodies.push(newLetter);
+        }
+        currentX += charW;
+    }
+}
+
+class Letter {
+    constructor(world, x, y, char, size) {
+        this.char = char;
+        this.size = size;
+        textSize(size);
+
+        let boxW = textWidth(char) * 0.9;
+        let boxH = size * 0.75;
+
+        this.body = Bodies.rectangle(x, y, boxW, boxH, {
+            restitution: 0.4,
+            friction: 0.1,
+            isStatic: true 
+        });
+        World.add(world, this.body);
+    }
+
+    show() {
+        let pos = this.body.position;
+        let angle = this.body.angle;
+        push();
+        translate(pos.x, pos.y);
+        rotateZ(angle);
+        fill(0);
+        noStroke();
+        textAlign(CENTER, CENTER);
+        textSize(this.size);
+        text(this.char, 0, 0);
+        pop();
+    }
+}
+
+function makeItFall() {
+    hasStarted = true;
+    world.gravity.y = 1.5; 
+    
+    for (let b of bodies) {
+        Body.setStatic(b.body, false);
+        Body.applyForce(b.body, b.body.position, {
+            x: random(-0.005, 0.005),
+            y: random(-0.01, -0.04)
+        });
+        Body.setAngularVelocity(b.body, random(-0.05, 0.05));
+    }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    initSketch(); // Recreate everything for correct positioning
+}
+</script>
+</body>
+</html>

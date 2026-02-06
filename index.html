@@ -21,7 +21,7 @@ h1 {
 }
 
 a {
-    height: 33px;
+    height: 19px;
     line-height: 0.9;
     display: block;
     font-family:Arial, Helvetica, sans-serif;
@@ -57,8 +57,8 @@ a:hover{
 p{
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 100;
-    font-size:xx-large;
-    margin: 0;
+    font-size:large;
+    margin: 3px;
 }
 
 h2{
@@ -73,7 +73,8 @@ h3{
     font-weight: 100;
     font-size:medium;
     margin-top: 0;
-    margin-left: 50%;
+    margin-left: 30%;
+    margin-right: 20%;
 }
 
 .gay{
@@ -88,7 +89,7 @@ h3{
 
 #canvas-container {
     width: 100%;
-    height: 20em;
+    height: 30em;
 }
 
 canvas {
@@ -118,6 +119,50 @@ canvas {
     margin-top: 0;
     
 }
+
+iframe{
+   width: 100vw;
+   height: 300px;
+    border: 0;
+    position:static;
+    
+}
+
+.menu {
+  background-color: #ffffff;
+  width: 40%;
+  margin-left: 60%;
+}
+
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content:center; /* distribuisce sulla larghezza */
+}
+
+.menu li {
+  flex: 1;              /* ogni voce occupa la stessa larghezza */
+  text-align: center;   /* testo centrato */
+}
+
+.menu a {
+  display: block;
+  padding: 5px 0;
+  color: rgb(0, 0, 0);
+  text-decoration: none;
+  font-family: Arial, sans-serif;
+}
+
+.menu a:hover {
+  background-color: #000000;
+}
+.menu a:hover{
+    color: #ffffff;
+}
+
+
 </style>
 
 </head>
@@ -132,14 +177,25 @@ canvas {
 
 
 <body>
+    
+
+<nav class="menu">
+  <ul>
+    <li><a href="#">HOME</a></li>
+    <li><a href="#">SERVIZZI</a></li>
+    <li><a href="#">CONTATTI</a></li>
+  </ul>
+</nav>
+
+
 
     <div id="canvas-container"></div>
 
-<div id="cursor-ellipse"></div>
+    <div id="cursor-ellipse"></div>
 
 
 <p>
-    <a target="_blank" href="https://www.instagram.com/mad__________design" class="spazioBianco">@INSTA</a>
+    <a target="_blank" href="https://www.instagram.com/mad__________design" class="spazioBianco">@INSTAGRAM</a>
     
     <img src="/lol.jpg" width="100%">
 </p>
@@ -164,12 +220,18 @@ canvas {
 <br>
 <br>
 
-   <img src="/lol.jpg" width="100%">
+  
+
+
+<br>
+<br>
+
 
 <section class="gay2">
     <div class="letters">DESCRIPTION </div>
     <div class="letters">& INTERACTION</div>
 </section> 
+
 
     <h3>
         Questo sito web è stato realizzato interamente in HTML, CSS e JavaScript come esercizio di sperimentazione tra struttura, interazione e movimento.
@@ -177,7 +239,8 @@ canvas {
         Le animazioni presenti nascono dall’uso di transizioni CSS, pseudo-classi come :hover e semplici funzioni JavaScript che reagiscono all’interazione dell’utente, come il movimento del cursore o il passaggio del mouse sugli elementi. 
     </h3>
 
-   
+
+    <iframe src="/es3/index.html"></iframe>
 
 </main>
 
@@ -217,7 +280,7 @@ function preload() {
     Common = Matter.Common;
 
     // Load Font
-    font = loadFont('HelveticaNeueCyr-Bold.otf');
+    font = loadFont('Helvetica.otf');
 }
 
 function setup() {
@@ -253,7 +316,7 @@ function initSketch() {
 
     // 3. Edge-to-Edge Scaling Logic
     let phrase = "Mad___Design";
-    let horizontalPadding = 40; // 20px margin on left and right
+    let horizontalPadding = 5; // 20px margin on left and right
     let targetWidth = width - horizontalPadding;
     
     let refSize = 100;
@@ -268,7 +331,7 @@ function initSketch() {
     // In WEBGL (0,0) is center. -height/2 is top edge.
     // 0.35 * dynamicTextSize nudges the physics body center so the visual top hits the margin.
     let marginTop = 20;
-    let textStartY = -height / 2 + marginTop + (dynamicTextSize * 0.35);
+    let textStartY = -height / 2 + marginTop + (dynamicTextSize * 0.45);
 
     // 5. Mouse Interaction for WEBGL
     const mouse = Mouse.create(canvas.elt);
